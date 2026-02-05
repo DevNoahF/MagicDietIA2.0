@@ -34,7 +34,7 @@ public class RecipeService {
                 .collect(Collectors.joining("\n"));
 
         String diet = diets.stream()
-                .map(userInfo -> "Diet: " + userInfo.diet())
+                .map(userInfo -> "Dieta: " + userInfo.diet())
                 .collect(Collectors.joining("\n"));
 
         String prompt = "Baseado na diet do usuário: " + diet +
@@ -44,7 +44,9 @@ public class RecipeService {
         Map<String, Object> requestBody =
                 Map.of(
                         "system_instruction", Map.of(
-                                "parts", List.of(Map.of("text", "Você é um chefe de cozinha."))
+                                "parts", List.of(Map.of("text", "Você é um chefe de cozinha." +
+                                        "E preciso que voce crie receitas deliciosas com os ingredientes fornecidos pelo usuário e que se adeque a dieta " +
+                                        "Retorne apenas a receita + modo de preparo."))
                         ),
                         "contents", List.of(
                                 Map.of(
