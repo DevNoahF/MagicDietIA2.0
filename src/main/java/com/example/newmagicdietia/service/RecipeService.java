@@ -2,8 +2,10 @@ package com.example.newmagicdietia.service;
 
 import com.example.newmagicdietia.dto.DietRequestDTO;
 import com.example.newmagicdietia.dto.FoodItemRequestDTO;
+import com.example.newmagicdietia.dto.GeminiResponseDTO;
+import com.example.newmagicdietia.dto.RecipeResponseDTO;
+import com.example.newmagicdietia.utility.TextFormatter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -20,12 +22,13 @@ public class RecipeService {
 
     public RecipeService(WebClient genimiWebClient) {
         this.webClient = genimiWebClient;
+
     }
 
     private final String apiKey = System.getenv("API_KEY");
 
 
-    public Mono<String> generateRecipe(List<FoodItemRequestDTO> foodItems, List<DietRequestDTO> diets) {
+    public Mono<RecipeResponseDTO> generateRecipe(List<FoodItemRequestDTO> foodItems, List<DietRequestDTO> diets) {
         String foods = foodItems.stream()
                 .map(item -> String.format("%s (%s): %d quantidade(s)",
                         item.nameFood(),
@@ -61,16 +64,13 @@ public class RecipeService {
                 .uri("/v1beta/models/gemini-3-flash-preview:generateContent")
                 .bodyValue(requestBody)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, response ->
-                        response.bodyToMono(String.class).flatMap(errorBody -> {
-                            System.out.println("O gemini rejeitou o pedido porque: " + errorBody);
-                            return Mono.error(new RuntimeException(errorBody));
-                        })
-                )
-                .bodyToMono(String.class);
+                .bodyToMono(GeminiResponseDTO.class)
+                .map(resp -> resp.candidates().get(0).content().parts().get(0).text())
+                .map(TextFormatter::formatRecipeText)
+                .map(RecipeResponseDTO::new);
+        }
 
 
-    }
 }
 
 
